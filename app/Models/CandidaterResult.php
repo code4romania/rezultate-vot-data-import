@@ -10,4 +10,10 @@ use Illuminate\Database\Eloquent\Model;
 class CandidaterResult extends Model
 {
     use HasFactory;
+
+    protected $connection = 'import';
+
+    protected $primaryKey = 'Id';
+
+    public $timestamps = false;
 }

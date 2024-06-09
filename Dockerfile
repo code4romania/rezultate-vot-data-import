@@ -72,7 +72,7 @@ COPY docker/php/php.ini /usr/local/etc/php/php.ini
 # COPY docker/php/www.conf /usr/local/etc/php-fpm.d/zz-docker.conf
 COPY docker/s6-rc.d /etc/s6-overlay/s6-rc.d
 
-COPY --from=assets --chown=www-data:www-data /build/public/build /var/www/public/build
+# COPY --from=assets --chown=www-data:www-data /build/public/build /var/www/public/build
 
 ENV APP_ENV production
 ENV APP_DEBUG false

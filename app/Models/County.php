@@ -10,4 +10,10 @@ use Illuminate\Database\Eloquent\Model;
 class County extends Model
 {
     use HasFactory;
+
+    protected $connection = 'import';
+
+    protected $primaryKey = 'CountyId';
+
+    public $timestamps = false;
 }

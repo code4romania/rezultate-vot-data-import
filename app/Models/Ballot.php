@@ -10,4 +10,10 @@ use Illuminate\Database\Eloquent\Model;
 class Ballot extends Model
 {
     use HasFactory;
+
+    protected $connection = 'import';
+
+    protected $primaryKey = 'BallotId';
+
+    public $timestamps = false;
 }

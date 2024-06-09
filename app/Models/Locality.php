@@ -10,4 +10,10 @@ use Illuminate\Database\Eloquent\Model;
 class Locality extends Model
 {
     use HasFactory;
+
+    protected $connection = 'import';
+
+    protected $primaryKey = 'LocalityId';
+
+    public $timestamps = false;
 }
