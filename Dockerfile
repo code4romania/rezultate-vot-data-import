@@ -19,9 +19,9 @@ RUN apk update && \
     install-php-extensions \
     event \
     excimer \
-    exif \
-    gd \
-    imagick \
+    # exif \
+    # gd \
+    # imagick \
     intl \
     mbstring \
     opcache \
