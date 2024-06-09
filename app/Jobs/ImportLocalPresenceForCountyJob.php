@@ -94,17 +94,6 @@ class ImportLocalPresenceForCountyJob implements ShouldQueue
             'Id' => $turnout?->getKey(),
             'EligibleVoters' => $this->getEligibleVoters($items),
             'TotalVotes' => $this->getTotalVotes($items),
-            'NullVotes' => $this->todo($items),
-            'VotesByMail' => $this->todo($items),
-            'ValidVotes' => $this->todo($items),
-            'TotalSeats' => $this->todo($items),
-            'Coefficient' => $this->todo($items),
-            'Threshold' => $this->todo($items),
-            'Circumscription' => $this->todo($items),
-            'MinVotes' => $this->todo($items),
-            'Mandates' => $this->todo($items),
-            'CorrespondenceVotes' => $this->todo($items),
-            'SpecialListsVotes' => $this->todo($items),
             'PermanentListsVotes' => $items->sum(TurnoutFieldEnum::VOTERS_ON_PERMANENT_LIST->value),
             'SuplimentaryVotes' => $items->sum(TurnoutFieldEnum::VOTERS_ON_COMPLEMENTARY_LIST->value),
             'Division' => DivisionEnum::CITY->value,
@@ -137,13 +126,5 @@ class ImportLocalPresenceForCountyJob implements ShouldQueue
         }
 
         return $votersOnPermanentLists + $votersOnComplementaryLists + $votersOnAdditionalLists + $votersOnMobileBox;
-    }
-
-    /**
-     * @todo implement
-     */
-    protected function todo(Collection $items): int
-    {
-        return 0;
     }
 }
