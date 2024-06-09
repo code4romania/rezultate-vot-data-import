@@ -69,18 +69,20 @@ class ImportLocalPresenceForCountyJob implements ShouldQueue
 
         foreach (['ballotIdPrimarie', 'ballotIdConsiliuLocal'] as $ballot) {
             Turnout::upsert(
-                $data->map(function (Collection $items, string $key) use ($localities, $turnouts, $ballot) {
-                    $locality = $localities
-                        ->where('Siruta', $key)
-                        ->first();
+                $data
+                    ->map(function (Collection $items, string $key) use ($localities, $turnouts, $ballot) {
+                        $locality = $localities
+                            ->where('Siruta', $key)
+                            ->first();
 
-                    $turnout = $turnouts
-                        ->where('LocalityId', $locality->getKey())
-                        ->where('BallotId', $this->{$ballot})
-                        ->first();
+                        $turnout = $turnouts
+                            ->where('LocalityId', $locality->getKey())
+                            ->where('BallotId', $this->{$ballot})
+                            ->first();
 
-                    return $this->generateData($items, $locality, $this->{$ballot}, $turnout);
-                })->all(),
+                        return $this->generateData($items, $locality, $this->{$ballot}, $turnout);
+                    })
+                    ->all(),
                 ['Id']
             );
         }

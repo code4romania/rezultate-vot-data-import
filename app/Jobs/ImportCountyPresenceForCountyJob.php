@@ -27,6 +27,10 @@ class ImportCountyPresenceForCountyJob implements ShouldQueue
     use Queueable;
     use SerializesModels;
 
+    public int $ballotIdPrimarie = 114;
+
+    public int $ballotIdConsiliuLocal = 116;
+
     public int $ballotIdPresedinteConsiliuJudetean = 115;
 
     public int $ballotIdConsiliuJudetean = 117;
@@ -56,11 +60,18 @@ class ImportCountyPresenceForCountyJob implements ShouldQueue
                 ->json('county')
         );
 
+        $ballots = collect([
+            'ballotIdPrimarie',
+            'ballotIdConsiliuLocal',
+            'ballotIdPresedinteConsiliuJudetean',
+            'ballotIdConsiliuJudetean',
+        ]);
+
         $turnouts = Turnout::query()
-            ->whereIn('BallotId', [$this->ballotIdPresedinteConsiliuJudetean, $this->ballotIdConsiliuJudetean])
+            ->whereIn('BallotId', $ballots->map(fn (string $ballot) => $this->{$ballot})->all())
             ->get(['Id', 'BallotId', 'CountyId']);
 
-        foreach (['ballotIdPresedinteConsiliuJudetean', 'ballotIdConsiliuJudetean'] as $ballot) {
+        $ballots->each(function (string $ballot) use ($data, $turnouts) {
             Turnout::upsert(
                 $data
                     ->map(function (array $item) use ($turnouts, $ballot) {
@@ -78,7 +89,7 @@ class ImportCountyPresenceForCountyJob implements ShouldQueue
                     ->all(),
                 ['Id']
             );
-        }
+        });
     }
 
     protected function generateData(array $item, County $county, int $ballotId, ?Turnout $turnout): array
