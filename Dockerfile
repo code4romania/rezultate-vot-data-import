@@ -20,7 +20,7 @@ RUN apk update && \
     event \
     excimer \
     # exif \
-    # gd \
+    gd \
     # imagick \
     intl \
     mbstring \
