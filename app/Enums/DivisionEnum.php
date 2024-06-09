@@ -1,12 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Enums;
 
-enum DivisionEnum:int
+enum DivisionEnum: int
 {
-    case COUNTY  = 2;
+    case NATIONAL = 0;
+    case COUNTY = 2;
     case CITY = 3;
-
-
 }
-

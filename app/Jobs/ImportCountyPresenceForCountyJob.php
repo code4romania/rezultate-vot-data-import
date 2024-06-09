@@ -89,6 +89,40 @@ class ImportCountyPresenceForCountyJob implements ShouldQueue
                     ->all(),
                 ['Id']
             );
+
+            $turnout = $turnouts
+                ->whereNull('CountryId')
+                ->whereNull('CountyId')
+                ->whereNull('LocalityId')
+                ->where('BallotId', $this->{$ballot})
+                ->first();
+
+            Turnout::upsert(
+                [
+                    'Id' => $turnout?->getKey(),
+                    'EligibleVoters' => $data->map(fn (array $county) => $this->getEligibleVoters($county))->sum(),
+                    'TotalVotes' => $data->map(fn (array $county) => $this->getTotalVotes($county))->sum(),
+                    'NullVotes' => $data->map(fn (array $county) => $this->todo($county))->sum(),
+                    'VotesByMail' => $data->map(fn (array $county) => $this->todo($county))->sum(),
+                    'ValidVotes' => $data->map(fn (array $county) => $this->todo($county))->sum(),
+                    'TotalSeats' => $data->map(fn (array $county) => $this->todo($county))->sum(),
+                    'Coefficient' => $data->map(fn (array $county) => $this->todo($county))->sum(),
+                    'Threshold' => $data->map(fn (array $county) => $this->todo($county))->sum(),
+                    'Circumscription' => $data->map(fn (array $county) => $this->todo($county))->sum(),
+                    'MinVotes' => $data->map(fn (array $county) => $this->todo($county))->sum(),
+                    'Mandates' => $data->map(fn (array $county) => $this->todo($county))->sum(),
+                    'CorrespondenceVotes' => $data->map(fn (array $county) => $this->todo($county))->sum(),
+                    'SpecialListsVotes' => $data->map(fn (array $county) => $this->todo($county))->sum(),
+                    'PermanentListsVotes' => $data->map(fn (array $county) => data_get($county, TurnoutFieldEnum::VOTERS_ON_PERMANENT_LIST->value, 0))->sum(),
+                    'SuplimentaryVotes' => $data->map(fn (array $county) => data_get($county, TurnoutFieldEnum::VOTERS_ON_COMPLEMENTARY_LIST->value, 0))->sum(),
+                    'Division' => DivisionEnum::NATIONAL->value,
+                    'BallotId' => $this->{$ballot},
+                    'CountryId' => null,
+                    'CountyId' => null,
+                    'LocalityId' => null,
+                ],
+                ['Id']
+            );
         });
     }
 
