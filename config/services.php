@@ -37,4 +37,11 @@ return [
         ],
     ],
 
+    'import' => [
+        'local_presence' => [
+            'enabled' => env('IMPORT_LOCAL_PRESENCE_ENABLED', false),
+            'cron' => env('IMPORT_LOCAL_PRESENCE_SCHEDULE', '*/5 * * * *'),
+            'url' => env('IMPORT_LOCAL_PRESENCE_URL', 'https://prezenta.roaep.ro/locale09062024/data/json/simpv/presence/presence_{short_county}_now.json'),
+        ],
+    ],
 ];

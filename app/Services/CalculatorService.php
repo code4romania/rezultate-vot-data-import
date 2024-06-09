@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Enums\TurnoutFieldEnum;
+use Exception;
 use Illuminate\Support\Collection;
 
 class CalculatorService
@@ -27,7 +28,7 @@ class CalculatorService
         $totalVoters = $votersOnPermanentLists + $votersOnComplementaryLists + $votersOnAdditionalLists + $votersOnMobileBox;
         $totalVotesFromEP = $items->sum(TurnoutFieldEnum::TOTAL_VOTERS->value);
         if ($totalVoters !== $totalVotesFromEP) {
-            throw new \Exception('Total voters do not match');
+            throw new Exception('Total voters do not match');
         }
 
         return $votersOnPermanentLists + $votersOnComplementaryLists + $votersOnAdditionalLists + $votersOnMobileBox;
