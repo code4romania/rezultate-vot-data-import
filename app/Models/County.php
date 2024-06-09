@@ -6,6 +6,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class County extends Model
 {
@@ -16,4 +17,9 @@ class County extends Model
     protected $primaryKey = 'CountyId';
 
     public $timestamps = false;
+
+    public function getCodeAttribute(): string
+    {
+        return Str::lower($this->ShortName);
+    }
 }

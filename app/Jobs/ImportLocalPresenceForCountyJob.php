@@ -9,7 +9,7 @@ use App\Enums\TurnoutFieldEnum;
 use App\Models\County;
 use App\Models\Locality;
 use App\Models\Turnout;
-use App\Services\CalculatorService;
+use Exception;
 use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -28,9 +28,9 @@ class ImportLocalPresenceForCountyJob implements ShouldQueue
     use Queueable;
     use SerializesModels;
 
-    public int $ballotIdPrimarie = 114; //primarie
+    public int $ballotIdPrimarie = 114;
 
-    public int $ballotIdConsiliuLocal = 116; //consiliu local
+    public int $ballotIdConsiliuLocal = 116;
 
     public County $county;
 
@@ -43,7 +43,7 @@ class ImportLocalPresenceForCountyJob implements ShouldQueue
     {
         $this->county = $county;
 
-        $this->url = Str::replace('{short_county}', strtolower($county->ShortName), config('services.import.local_presence_url'));
+        $this->url = Str::replace('{short_county}', $county->code, config('services.import.local_presence.url'));
     }
 
     /**
@@ -51,41 +51,58 @@ class ImportLocalPresenceForCountyJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $data = Http::get($this->url)
-            ->throw()
-            ->json('precinct');
+        $data = collect(
+            Http::get($this->url)
+                ->throw()
+                ->json('precinct')
+        )
+            ->groupBy('uat.siruta');
 
-        collect($data)
-            ->groupBy('uat.siruta')
-            ->each(function (Collection $items, string $key) {
-                $locality = Locality::where('Siruta', $key)->first();
+        $turnouts = Turnout::query()
+            ->whereIn('BallotId', [$this->ballotIdPrimarie, $this->ballotIdConsiliuLocal])
+            ->where('CountyId', $this->county->getKey())
+            ->get(['Id', 'BallotId', 'CountyId', 'LocalityId']);
 
-                Turnout::where('LocalityId', $locality->id)
-                    ->where('BallotId', $this->ballotIdPrimarie)
-                    ->update($this->generateData($items, $locality, $this->ballotIdPrimarie));
+        $localities = Locality::query()
+            ->where('CountyId', $this->county->getKey())
+            ->get(['Siruta', 'LocalityId', 'CountyId']);
 
-                Turnout::where('LocalityId', $locality->id)
-                    ->where('BallotId', $this->ballotIdConsiliuLocal)
-                    ->update($this->generateData($items, $locality, $this->ballotIdConsiliuLocal));
-            });
+        foreach (['ballotIdPrimarie', 'ballotIdConsiliuLocal'] as $ballot) {
+            Turnout::upsert(
+                $data->map(function (Collection $items, string $key) use ($localities, $turnouts, $ballot) {
+                    $locality = $localities
+                        ->where('Siruta', $key)
+                        ->first();
+
+                    $turnout = $turnouts
+                        ->where('LocalityId', $locality->getKey())
+                        ->where('BallotId', $this->{$ballot})
+                        ->first();
+
+                    return $this->generateData($items, $locality, $this->{$ballot}, $turnout);
+                })->all(),
+                ['Id']
+            );
+        }
     }
 
-    protected function generateData(Collection $items, Locality $locality, int $ballotId): array
+    protected function generateData(Collection $items, Locality $locality, int $ballotId, ?Turnout $turnout): array
     {
         return [
-            'EligibleVoters' => CalculatorService::eligibleVoters($items),
-            'TotalVotes' => CalculatorService::totalVotes($items),
-            'NullVotes' => CalculatorService::nullVotes($items),
-            'VotesByMail' => CalculatorService::votesByMail($items),
-            'ValidVotes' => CalculatorService::validVotes($items),
-            'TotalSeats' => CalculatorService::notUse(),
-            'Coefficient' => CalculatorService::notUse(),
-            'Threshold' => CalculatorService::notUse(),
-            'Circumscription' => CalculatorService::notUse(),
-            'MinVotes' => CalculatorService::notUse(),
-            'Mandates' => CalculatorService::notUse(),
-            'CorrespondenceVotes' => CalculatorService::notUse(),
-            'SpecialListsVotes' => CalculatorService::notUse(),
+            'Id' => $turnout?->getKey(),
+            'EligibleVoters' => $this->getEligibleVoters($items),
+            'TotalVotes' => $this->getTotalVotes($items),
+            'NullVotes' => $this->todo($items),
+            'VotesByMail' => $this->todo($items),
+            'ValidVotes' => $this->todo($items),
+            'TotalSeats' => $this->todo($items),
+            'Coefficient' => $this->todo($items),
+            'Threshold' => $this->todo($items),
+            'Circumscription' => $this->todo($items),
+            'MinVotes' => $this->todo($items),
+            'Mandates' => $this->todo($items),
+            'CorrespondenceVotes' => $this->todo($items),
+            'SpecialListsVotes' => $this->todo($items),
             'PermanentListsVotes' => $items->sum(TurnoutFieldEnum::VOTERS_ON_PERMANENT_LIST->value),
             'SuplimentaryVotes' => $items->sum(TurnoutFieldEnum::VOTERS_ON_COMPLEMENTARY_LIST->value),
             'Division' => DivisionEnum::COUNTY->value,
@@ -93,5 +110,38 @@ class ImportLocalPresenceForCountyJob implements ShouldQueue
             'CountyId' => $locality->CountyId,
             'LocalityId' => $locality->LocalityId,
         ];
+    }
+
+    protected function getEligibleVoters(Collection $items): int
+    {
+        $votersOnPermanentLists = $items->sum(TurnoutFieldEnum::REGISTER_ON_PERMANENT_LIST->value);
+        $votersOnComplementaryLists = $items->sum(TurnoutFieldEnum::REGISTER_ON_COMPLEMENTARY_LIST->value);
+
+        return $votersOnPermanentLists + $votersOnComplementaryLists;
+    }
+
+    protected function getTotalVotes(Collection $items): int
+    {
+        $votersOnPermanentLists = $items->sum(TurnoutFieldEnum::VOTERS_ON_PERMANENT_LIST->value);
+        $votersOnComplementaryLists = $items->sum(TurnoutFieldEnum::VOTERS_ON_COMPLEMENTARY_LIST->value);
+        $votersOnAdditionalLists = $items->sum(TurnoutFieldEnum::VOTERS_ON_ADDITIONAL_LIST->value);
+        $votersOnMobileBox = $items->sum(TurnoutFieldEnum::VOTERS_ON_MOBILE_BOX->value);
+
+        $totalVoters = $votersOnPermanentLists + $votersOnComplementaryLists + $votersOnAdditionalLists + $votersOnMobileBox;
+        $totalVotesFromEP = $items->sum(TurnoutFieldEnum::TOTAL_VOTERS->value);
+
+        if ($totalVoters !== $totalVotesFromEP) {
+            throw new Exception('Total voters do not match');
+        }
+
+        return $votersOnPermanentLists + $votersOnComplementaryLists + $votersOnAdditionalLists + $votersOnMobileBox;
+    }
+
+    /**
+     * @todo implement
+     */
+    protected function todo(Collection $items): int
+    {
+        return 0;
     }
 }

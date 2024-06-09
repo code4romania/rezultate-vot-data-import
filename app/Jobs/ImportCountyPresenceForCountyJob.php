@@ -70,10 +70,10 @@ class ImportCountyPresenceForCountyJob implements ShouldQueue
 
                         $turnout = $turnouts
                             ->where('CountyId', $county->getKey())
-                            ->where('BallotId', $this->$ballot)
+                            ->where('BallotId', $this->{$ballot})
                             ->first();
 
-                        return $this->generateData($item, $county, $this->$ballot, $turnout);
+                        return $this->generateData($item, $county, $this->{$ballot}, $turnout);
                     })
                     ->all(),
                 ['Id']

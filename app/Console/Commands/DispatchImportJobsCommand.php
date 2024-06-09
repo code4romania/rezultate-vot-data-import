@@ -10,7 +10,6 @@ use App\Models\County;
 use Illuminate\Bus\Batch;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Bus;
-use Illuminate\Support\Str;
 
 class DispatchImportJobsCommand extends Command
 {
@@ -33,12 +32,10 @@ class DispatchImportJobsCommand extends Command
      */
     public function handle(): int
     {
-        $counties = County::all()
-            ->pluck('ShortName')
-            ->map(fn ($name) => Str::lower($name));
+        $counties = County::all();
 
         Bus::batch([
-            new ImportCountyPresenceForCountyJob($counties->first()),
+            new ImportCountyPresenceForCountyJob($counties->first()->code),
             ...$counties
                 ->map(fn ($county) => new ImportLocalPresenceForCountyJob($county))
                 ->all(),
