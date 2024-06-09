@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use App\Console\Commands\DispatchImportLocalPresenceJobsCommand;
+use App\Console\Commands\DispatchImportJobsCommand;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -22,9 +22,9 @@ return Application::configure(basePath: dirname(__DIR__))
         Integration::handles($exceptions);
     })
     ->withSchedule(function (Schedule $schedule) {
-        $schedule->command(DispatchImportLocalPresenceJobsCommand::class)
-            ->cron(config('services.import.local_presence.cron'))
-            ->when(fn () => config('services.import.local_presence.enabled'))
+        $schedule->command(DispatchImportJobsCommand::class)
+            ->cron(config('services.import.cron'))
+            ->when(fn () => config('services.import.enabled'))
             ->sentryMonitor();
     })
     ->create();
