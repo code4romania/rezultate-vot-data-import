@@ -18,7 +18,7 @@ class DispatchImportJobsCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'app:import-jobs';
+    protected $signature = 'app:import:jobs';
 
     /**
      * The console command description.
