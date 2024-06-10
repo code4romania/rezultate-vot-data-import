@@ -50,6 +50,8 @@ class EuroparlImport implements ToCollection, WithHeadingRow
                         $candidate,
                         $group,
                         division: DivisionEnum::LOCALITY,
+                        localityId: $this->getLocalityId($uat_siruta),
+                        countyId: $this->countyId,
                     ))
             )
             ->flatten(1)
@@ -62,6 +64,7 @@ class EuroparlImport implements ToCollection, WithHeadingRow
                 $candidate,
                 $collection,
                 division: DivisionEnum::COUNTY,
+                countyId: $this->countyId,
             ))
             ->tap(function (Collection $chunk) {
                 Cache::driver('file')->rememberForever("europarl_county_results_{$this->countyCode}", fn () => $chunk);
