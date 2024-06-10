@@ -49,20 +49,17 @@ class EuroparlComputeNationalResultsJob implements ShouldQueue
                 }
             })
             ->flatten(1)
-            ->groupBy('Name')
-            ->dd();
-
-        dd($collection);
-
+            ->groupBy('Name');
+//        dd($this->candidates->first());
         $this->candidates
-            ->map(fn (array $candidate) => $this->makeCandidateResult(
+            ->map(fn (array $candidate) => $this->makeBornCandidateResult(
                 $candidate,
-                $collection,
+                $collection->get($candidate['name']),
                 division: DivisionEnum::NATIONAL,
             ))
-            ->dump()
             ->tap(function (Collection $chunk) {
                 CandidateResult::upsert($chunk->all(), ['Id']);
             });
+
     }
 }
