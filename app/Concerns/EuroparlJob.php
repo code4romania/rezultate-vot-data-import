@@ -77,7 +77,7 @@ trait EuroparlJob
         $this->candidateResults = CandidateResult::query()
             ->toBase()
             ->where('BallotId', $this->ballotId)
-            ->get(['Id', 'Name', 'PartyId', 'CountyId', 'LocalityId', 'CountryId', ''])
+            ->get(['Id', 'Name', 'PartyId', 'CountyId', 'LocalityId', 'CountryId'])
             ->map(function (stdClass $candidateResult) {
                 $candidateResult->Name = Str::slug($candidateResult->Name);
 
