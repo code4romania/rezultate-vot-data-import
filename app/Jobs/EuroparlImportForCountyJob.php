@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
-class ImportEuroparlForCountyJob implements ShouldQueue
+class EuroparlImportForCountyJob implements ShouldQueue
 {
     use Batchable;
     use Dispatchable;
@@ -56,7 +56,10 @@ class ImportEuroparlForCountyJob implements ShouldQueue
             );
         }
 
-        (new EuroparlImport($this->countyId))->import($filename);
+        (new EuroparlImport(
+            $this->countyCode,
+            $this->countyId
+        ))->import($filename);
 
         // Storage::delete($filename);
     }

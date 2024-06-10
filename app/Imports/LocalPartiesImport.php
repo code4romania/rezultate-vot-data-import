@@ -54,14 +54,14 @@ class LocalPartiesImport extends LocalImport
                 ];
 
                 $candidateResult = $this->candidateResults
-                    ->firstWhere(
-                        fn (CandidateResult $candidateResult) => $candidateResult->BallotId === $result['BallotId']
+                    ->firstWhere(function (CandidateResult $candidateResult) use ($result) {
+                        return $candidateResult->BallotId === $result['BallotId']
                             && $candidateResult->Name === $result['Name']
                             && $candidateResult->CountyId === $result['CountyId']
                             && $candidateResult->LocalityId === $result['LocalityId']
                             && $candidateResult->PartyName === $result['PartyName']
-                            && $candidateResult->PartyId === $result['PartyId']
-                    );
+                            && $candidateResult->PartyId === $result['PartyId'];
+                    });
 
                 $result['Id'] = $candidateResult?->Id;
 
