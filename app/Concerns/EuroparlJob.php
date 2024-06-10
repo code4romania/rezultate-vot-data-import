@@ -7,7 +7,6 @@ namespace App\Concerns;
 use App\Enums\DivisionEnum;
 use App\Models\CandidateResult;
 use App\Models\Party;
-use Exception;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
@@ -106,6 +105,7 @@ trait EuroparlJob
     public function makeCandidateResult(
         array $candidate,
         Collection $collection,
+        DivisionEnum $division,
         ?int $countyId = null,
         ?int $localityId = null,
         ?int $countryId = null,
@@ -125,13 +125,7 @@ trait EuroparlJob
             'CountyId' => $countyId,
             'LocalityId' => $localityId,
             'CountryId' => $countryId,
-
-            'Division' => match (true) {
-                filled($localityId) => DivisionEnum::CITY->value,
-                filled($countyId) => DivisionEnum::COUNTY->value,
-                filled($countryId) => DivisionEnum::NATIONAL->value,
-                default => throw new Exception('Invalid division'),
-            },
+            'Division' => $division?->value,
             'BallotPosition' => $candidate['position'],
         ];
 

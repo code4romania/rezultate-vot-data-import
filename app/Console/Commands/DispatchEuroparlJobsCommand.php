@@ -6,6 +6,7 @@ namespace App\Console\Commands;
 
 use App\Jobs\EuroparlComputeNationalResultsJob;
 use App\Jobs\EuroparlImportForCountyJob;
+use App\Jobs\EuroparlImportForForeignJob;
 use App\Jobs\EuroparlPrepareJob;
 use App\Models\County;
 use Illuminate\Bus\Batch;
@@ -65,7 +66,7 @@ class DispatchEuroparlJobsCommand extends Command
             new EuroparlComputeNationalResultsJob($counties->pluck('code')),
 
             // străinătate,
-            // new EuroparlImportForCountyJob('sr'),
+            new EuroparlImportForForeignJob,
         ])->dispatch();
 
         return self::SUCCESS;
@@ -74,7 +75,6 @@ class DispatchEuroparlJobsCommand extends Command
     protected function getCounties(): Collection
     {
         return County::query()
-        // ->where('ShortName', 'IS')
             ->get();
     }
 }

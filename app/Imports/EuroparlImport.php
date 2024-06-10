@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Imports;
 
 use App\Concerns\EuroparlJob;
+use App\Enums\DivisionEnum;
 use App\Models\CandidateResult;
 use App\Models\Locality;
 use Exception;
@@ -48,8 +49,7 @@ class EuroparlImport implements ToCollection, WithHeadingRow
                     ->map(fn (array $candidate) => $this->makeCandidateResult(
                         $candidate,
                         $group,
-                        countyId: $this->countyId,
-                        localityId: $this->getLocalityId($uat_siruta)
+                        division: DivisionEnum::LOCALITY,
                     ))
             )
             ->flatten(1)
@@ -61,7 +61,7 @@ class EuroparlImport implements ToCollection, WithHeadingRow
             ->map(fn (array $candidate) => $this->makeCandidateResult(
                 $candidate,
                 $collection,
-                countyId: $this->countyId,
+                division: DivisionEnum::COUNTY,
             ))
             ->tap(function (Collection $chunk) {
                 Cache::driver('file')->rememberForever("europarl_county_results_{$this->countyCode}", fn () => $chunk);
