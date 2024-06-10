@@ -43,5 +43,10 @@ return [
         'local_presence' => [
             'url' => env('IMPORT_LOCAL_PRESENCE_URL', 'https://prezenta.roaep.ro/locale09062024/data/json/simpv/presence/presence_{short_county}_now.json'),
         ],
+        'europarl' => [
+            'url' => env('IMPORT_EUROPARL_URL', 'https://prezenta.roaep.ro/presa/pv/EUP-20240609/pv_part_cnty_eup_{code}.csv'),
+            'username' => env('IMPORT_EUROPARL_USERNAME'),
+            'password' => env('IMPORT_EUROPARL_PASSWORD'),
+        ],
     ],
 ];
