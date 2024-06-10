@@ -8,7 +8,6 @@ use App\Enums\DivisionEnum;
 use App\Models\CandidateResult;
 use App\Models\Party;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use stdClass;
 
@@ -56,6 +55,7 @@ trait EuroparlJob
                 'name' => $name,
                 'normalizedName' => Str::slug($name),
                 'key' => Str::slug($name . '_voturi', '_'),
+
             ]);
     }
 
@@ -73,19 +73,16 @@ trait EuroparlJob
 
     protected function loadCandidateResults(): void
     {
-        $this->candidateResults = Cache::driver('file')
-            ->rememberForever(
-                'europarl_candidate_results',
-                fn () => CandidateResult::query()
-                    ->toBase()
-                    ->where('BallotId', $this->ballotId)
-                    ->get(['Id', 'Name', 'PartyId', 'CountyId', 'LocalityId', 'CountryId'])
-                    ->map(function (stdClass $candidateResult) {
-                        $candidateResult->Name = Str::slug($candidateResult->Name);
 
-                        return $candidateResult;
-                    })
-            );
+        $this->candidateResults = CandidateResult::query()
+            ->toBase()
+            ->where('BallotId', $this->ballotId)
+            ->get(['Id', 'Name', 'PartyId', 'CountyId', 'LocalityId', 'CountryId', ''])
+            ->map(function (stdClass $candidateResult) {
+                $candidateResult->Name = Str::slug($candidateResult->Name);
+
+                return $candidateResult;
+            });
     }
 
     protected function getPartyId(string $name): ?int
@@ -110,8 +107,10 @@ trait EuroparlJob
         ?int $localityId = null,
         ?int $countryId = null,
     ): array {
+        $key = ($division == DivisionEnum::NATIONAL) ? 'Votes' : $candidate['key'];
+
         $result = [
-            'Votes' => $collection->sum($candidate['key']),
+            'Votes' => $collection->sum($key),
             'BallotId' => $this->ballotId,
             'Name' => $candidate['name'],
             'PartyId' => $this->getPartyId($candidate['name']),
