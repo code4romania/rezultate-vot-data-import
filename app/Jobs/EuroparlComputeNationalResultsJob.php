@@ -7,6 +7,7 @@ namespace App\Jobs;
 use App\Concerns\EuroparlJob;
 use App\Enums\DivisionEnum;
 use App\Models\CandidateResult;
+use App\Models\Turnout;
 use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -50,7 +51,8 @@ class EuroparlComputeNationalResultsJob implements ShouldQueue
             })
             ->flatten(1)
             ->groupBy('Name');
-        $this->candidates
+
+        $tmp = $this->candidates
             ->map(fn (array $candidate) => $this->makeCandidateResult(
                 $candidate,
                 $collection->get($candidate['name']),
@@ -59,6 +61,24 @@ class EuroparlComputeNationalResultsJob implements ShouldQueue
             ->tap(function (Collection $chunk) {
                 CandidateResult::upsert($chunk->all(), ['Id']);
             });
+
+        $data = [
+            'ValidVotes' => $tmp->sum('ValidVotes'),
+            'NullVotes' => $tmp->sum('NullVotes'),
+            'TotalVotes' => $tmp->sum('TotalVotes'),
+            'CountryId' => null,
+            'Division' => DivisionEnum::NATIONAL->value,
+            'BallotId' => 118,
+        ];
+        $id = Turnout::where('Division', DivisionEnum::NATIONAL->value)
+            ->where('BallotId', 118)
+            ->first()?->Id;
+        $data['Id'] = $id ?? null;
+        if(!empty($data['Id'])){
+            Turnout::where('Id', $data['Id'])->update($data);
+        }else{
+            Turnout::insert($data);
+        }
 
     }
 }

@@ -41,7 +41,7 @@ class DispatchEuroparlJobsCommand extends Command
             // Prepare for import
             new EuroparlPrepareJob,
 
-            // Import data for each county
+//            // Import data for each county
             Bus::batch($counties->map(fn ($county) => new EuroparlImportForCountyJob($county->code, $county->getKey())))
                 ->before(function (Batch $batch) {
                     logger()->info('EuroparlImportForCountyJob batch created', [
@@ -62,7 +62,7 @@ class DispatchEuroparlJobsCommand extends Command
                     ]);
                 }),
 
-            // Compute national totals from data above,
+//            // Compute national totals from data above,
             new EuroparlComputeNationalResultsJob($counties->pluck('code')),
 
             // străinătate,
@@ -75,6 +75,7 @@ class DispatchEuroparlJobsCommand extends Command
     protected function getCounties(): Collection
     {
         return County::query()
+//            ->where('ShortName','IS')
             ->get();
     }
 }
