@@ -126,9 +126,9 @@ abstract class LocalImport implements ToCollection, WithHeadingRow, WithChunkRea
     protected function getDivision(string $source): DivisionEnum
     {
         return match ($this->normalize($source)) {
-            'primari' => DivisionEnum::CITY,
-            'consilieri-locali' => DivisionEnum::CITY,
-            'primar-general' => DivisionEnum::CITY,
+            'primari' => DivisionEnum::LOCALITY,
+            'consilieri-locali' => DivisionEnum::LOCALITY,
+            'primar-general' => DivisionEnum::LOCALITY,
             'presedinte-consiliu-judetean' => DivisionEnum::COUNTY,
             'consiliu-general' => DivisionEnum::COUNTY,
             'consiliu-judetean' => DivisionEnum::COUNTY,

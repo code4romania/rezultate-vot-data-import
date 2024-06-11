@@ -107,7 +107,7 @@ class ImportLocalPresenceForCountyJob implements ShouldQueue
             'SpecialListsVotes' => 0,
             'PermanentListsVotes' => $items->sum(TurnoutFieldEnum::VOTERS_ON_PERMANENT_LIST->value),
             'SuplimentaryVotes' => $items->sum(TurnoutFieldEnum::VOTERS_ON_COMPLEMENTARY_LIST->value),
-            'Division' => DivisionEnum::CITY->value,
+            'Division' => DivisionEnum::LOCALITY->value,
             'BallotId' => $ballotId,
             'CountyId' => $locality->CountyId,
             'LocalityId' => $locality->LocalityId,
