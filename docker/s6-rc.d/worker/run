@@ -4,6 +4,6 @@ php /var/www/artisan queue:work \
     --max-jobs $WORKER_MAX_JOBS \
     --sleep $WORKER_SLEEP \
     --rest $WORKER_REST \
-    --timeout = 0 \
+    --timeout $WORKER_TIMEOUT \
     --tries $WORKER_TRIES \
     --force
