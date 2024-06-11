@@ -2,12 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\Jobs;
+namespace App\Jobs\Europarl;
 
 use App\Concerns\EuroparlJob;
 use App\Enums\DivisionEnum;
-use App\Models\CandidateResult;
-use App\Models\Turnout;
 use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -17,7 +15,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 
-class EuroparlComputeNationalResultsJob implements ShouldQueue
+class ComputeNationalResultsJob implements ShouldQueue
 {
     use Dispatchable;
     use InteractsWithQueue;
@@ -33,14 +31,18 @@ class EuroparlComputeNationalResultsJob implements ShouldQueue
     public function __construct(Collection $counties)
     {
         $this->counties = $counties;
-
-        $this->loadData();
     }
 
     /**
      * Execute the job.
      */
     public function handle(): void
+    {
+        $this->importCandidateResults();
+        $this->importTurnouts();
+    }
+
+    protected function importCandidateResults(): void
     {
         $collection = $this->counties
             ->map(fn (string $code) => Cache::driver('file')->get("europarl_county_results_{$code}"))
@@ -52,33 +54,34 @@ class EuroparlComputeNationalResultsJob implements ShouldQueue
             ->flatten(1)
             ->groupBy('Name');
 
-        $tmp = $this->candidates
+        $this->getCandidates()
             ->map(fn (array $candidate) => $this->makeCandidateResult(
                 $candidate,
                 $collection->get($candidate['name']),
                 division: DivisionEnum::NATIONAL,
             ))
             ->tap(function (Collection $chunk) {
-                CandidateResult::upsert($chunk->all(), ['Id']);
+                $this->upsertCandidateResults($chunk);
             });
+    }
 
-        $data = [
-            'ValidVotes' => $tmp->sum('ValidVotes'),
-            'NullVotes' => $tmp->sum('NullVotes'),
-            'TotalVotes' => $tmp->sum('TotalVotes'),
-            'CountryId' => null,
-            'Division' => DivisionEnum::NATIONAL->value,
-            'BallotId' => 118,
-        ];
-        $id = Turnout::where('Division', DivisionEnum::NATIONAL->value)
-            ->where('BallotId', 118)
-            ->first()?->Id;
-        $data['Id'] = $id ?? null;
-        if(!empty($data['Id'])){
-            Turnout::where('Id', $data['Id'])->update($data);
-        }else{
-            Turnout::insert($data);
-        }
+    protected function importTurnouts(): void
+    {
+        $collection = $this->counties
+            ->map(fn (string $code) => Cache::driver('file')->get("europarl_turnouts_{$code}"))
+            ->tap(function (Collection $collection) {
+                if (! $collection->every(fn ($turnout) => $turnout !== null)) {
+                    throw new Exception('Not all turnouts are available');
+                }
+            })
+            ->flatten(1);
 
+        // Global level
+        $this->upsertTurnouts(collect([
+            $this->makeTurnout(
+                $collection,
+                division: DivisionEnum::NATIONAL,
+            ),
+        ]));
     }
 }

@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Jobs;
+namespace App\Jobs\Europarl;
 
-use App\Imports\EuroparlImport;
+use App\Imports\Europarl\CountyImport;
 use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
-class EuroparlImportForCountyJob implements ShouldQueue
+class ImportCountyJob implements ShouldQueue
 {
     use Batchable;
     use Dispatchable;
@@ -27,8 +27,6 @@ class EuroparlImportForCountyJob implements ShouldQueue
 
     public ?int $countyId;
 
-    public string $url;
-
     /**
      * Create a new job instance.
      */
@@ -36,7 +34,6 @@ class EuroparlImportForCountyJob implements ShouldQueue
     {
         $this->countyCode = $countyCode;
         $this->countyId = $countyId;
-        $this->url = Str::replace('{code}', $countyCode, config('services.import.europarl.url'));
     }
 
     /**
@@ -44,23 +41,17 @@ class EuroparlImportForCountyJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $url = Str::replace('{code}', $this->countyCode, config('services.import.europarl.url'));
         $filename = "{$this->countyCode}.csv";
 
-        if (! Storage::exists($filename)) {
-            Storage::put(
-                $filename,
-                Http::withBasicAuth(config('services.import.europarl.username'), config('services.import.europarl.password'))
-                    ->get($this->url)
-                    ->throw()
-                    ->body()
-            );
-        }
+        Storage::put(
+            $filename,
+            Http::withBasicAuth(config('services.import.europarl.username'), config('services.import.europarl.password'))
+                ->get($url)
+                ->throw()
+                ->body()
+        );
 
-        (new EuroparlImport(
-            $this->countyCode,
-            $this->countyId
-        ))->import($filename);
-
-        // Storage::delete($filename);
+        (new CountyImport($this->countyCode, $this->countyId))->import($filename);
     }
 }

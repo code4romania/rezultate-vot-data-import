@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Console\Commands;
 
-use App\Jobs\EuroparlComputeNationalResultsJob;
-use App\Jobs\EuroparlImportForCountyJob;
-use App\Jobs\EuroparlImportForForeignJob;
-use App\Jobs\EuroparlPrepareJob;
+use App\Jobs\Europarl\ComputeNationalResultsJob;
+use App\Jobs\Europarl\ImportAbroadJob;
+use App\Jobs\Europarl\ImportCountyJob;
+use App\Jobs\Europarl\PrepareImportJob;
 use App\Models\County;
 use Illuminate\Bus\Batch;
 use Illuminate\Console\Command;
@@ -39,10 +39,10 @@ class DispatchEuroparlJobsCommand extends Command
 
         Bus::chain([
             // Prepare for import
-            new EuroparlPrepareJob,
+            new PrepareImportJob($counties->pluck('code')),
 
             // Import data for each county
-            Bus::batch($counties->map(fn ($county) => new EuroparlImportForCountyJob($county->code, $county->getKey())))
+            Bus::batch($counties->map(fn ($county) => new ImportCountyJob($county->code, $county->getKey())))
                 ->before(function (Batch $batch) {
                     logger()->info('EuroparlImportForCountyJob batch created', [
                         'batch' => $batch->id,
@@ -63,10 +63,10 @@ class DispatchEuroparlJobsCommand extends Command
                 }),
 
             // Compute national totals from data above,
-            new EuroparlComputeNationalResultsJob($counties->pluck('code')),
+            new ComputeNationalResultsJob($counties->pluck('code')),
 
             // străinătate,
-            new EuroparlImportForForeignJob,
+            new ImportAbroadJob,
         ])->dispatch();
 
         return self::SUCCESS;
@@ -75,7 +75,6 @@ class DispatchEuroparlJobsCommand extends Command
     protected function getCounties(): Collection
     {
         return County::query()
-            // ->where('ShortName', 'IS')
             ->get();
     }
 }

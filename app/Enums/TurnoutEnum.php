@@ -1,9 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Enums;
 
-enum TurnoutEnum:string
+enum TurnoutEnum: string
 {
-    case ValidVotes = 'b';
+    case EligibleVoters = 'a';
+    case Voters = 'b';
+    case ValidVotes = 'e';
     case NullVotes = 'f';
 }

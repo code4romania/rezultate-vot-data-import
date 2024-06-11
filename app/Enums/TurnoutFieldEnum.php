@@ -1,8 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Enums;
 
-enum TurnoutFieldEnum:string
+enum TurnoutFieldEnum: string
 {
     case REGISTER_ON_PERMANENT_LIST = 'initial_count_lp';
     case REGISTER_ON_COMPLEMENTARY_LIST = 'initial_count_lc';

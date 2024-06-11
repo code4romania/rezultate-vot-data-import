@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Jobs;
+namespace App\Jobs\Europarl;
 
-use App\Imports\EuroparlForeignImport;
+use App\Imports\Europarl\AbroadImport;
 use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
-class EuroparlImportForForeignJob implements ShouldQueue
+class ImportAbroadJob implements ShouldQueue
 {
     use Batchable;
     use Dispatchable;
@@ -42,18 +42,14 @@ class EuroparlImportForForeignJob implements ShouldQueue
     {
         $filename = "{$this->countyCode}.csv";
 
-        if (! Storage::exists($filename)) {
-            Storage::put(
-                $filename,
-                Http::withBasicAuth(config('services.import.europarl.username'), config('services.import.europarl.password'))
-                    ->get($this->url)
-                    ->throw()
-                    ->body()
-            );
-        }
+        Storage::put(
+            $filename,
+            Http::withBasicAuth(config('services.import.europarl.username'), config('services.import.europarl.password'))
+                ->get($this->url)
+                ->throw()
+                ->body()
+        );
 
-        (new EuroparlForeignImport)->import($filename);
-
-        // Storage::delete($filename);
+        (new AbroadImport)->import($filename);
     }
 }
