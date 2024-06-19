@@ -41,6 +41,9 @@ class DispatchEuroparlJobsCommand extends Command
             // Prepare for import
             new PrepareImportJob($counties->pluck('code')),
 
+            // Străinătate
+            new ImportAbroadJob,
+
             // Import data for each county
             Bus::batch($counties->map(fn ($county) => new ImportCountyJob($county->code, $county->getKey())))
                 ->before(function (Batch $batch) {
@@ -65,8 +68,6 @@ class DispatchEuroparlJobsCommand extends Command
             // Compute national totals from data above,
             new ComputeNationalResultsJob($counties->pluck('code')),
 
-            // străinătate,
-            new ImportAbroadJob,
         ])->dispatch();
 
         return self::SUCCESS;
