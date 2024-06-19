@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Jobs\Europarl;
 
+use App\Concerns\UsesEuroparlUrl;
 use App\Imports\Europarl\CountyImport;
 use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
@@ -13,7 +14,6 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 
 class ImportCountyJob implements ShouldQueue
 {
@@ -22,6 +22,7 @@ class ImportCountyJob implements ShouldQueue
     use InteractsWithQueue;
     use Queueable;
     use SerializesModels;
+    use UsesEuroparlUrl;
 
     public string $countyCode;
 
@@ -41,13 +42,12 @@ class ImportCountyJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $url = Str::replace('{code}', $this->countyCode, config('services.import.europarl.url'));
         $filename = "{$this->countyCode}.csv";
 
         Storage::put(
             $filename,
             Http::withBasicAuth(config('services.import.europarl.username'), config('services.import.europarl.password'))
-                ->get($url)
+                ->get($this->getEuroparlUrl($this->countyCode))
                 ->throw()
                 ->body()
         );

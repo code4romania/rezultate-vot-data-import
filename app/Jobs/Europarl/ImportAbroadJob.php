@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Jobs\Europarl;
 
+use App\Concerns\UsesEuroparlUrl;
 use App\Imports\Europarl\AbroadImport;
 use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
@@ -13,7 +14,6 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 
 class ImportAbroadJob implements ShouldQueue
 {
@@ -22,18 +22,9 @@ class ImportAbroadJob implements ShouldQueue
     use InteractsWithQueue;
     use Queueable;
     use SerializesModels;
+    use UsesEuroparlUrl;
 
     public string $countyCode = 'sr';
-
-    public string $url;
-
-    /**
-     * Create a new job instance.
-     */
-    public function __construct()
-    {
-        $this->url = Str::replace('{code}', $this->countyCode, config('services.import.europarl.url'));
-    }
 
     /**
      * Execute the job.
@@ -45,7 +36,7 @@ class ImportAbroadJob implements ShouldQueue
         Storage::put(
             $filename,
             Http::withBasicAuth(config('services.import.europarl.username'), config('services.import.europarl.password'))
-                ->get($this->url)
+                ->get($this->getEuroparlUrl($this->countyCode))
                 ->throw()
                 ->body()
         );
